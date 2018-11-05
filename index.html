@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Game</title>
+    <link rel="stylesheet" href="assets/css/base.css">
+</head>
+<body>
+<canvas id="game_canvas" width="1510px" height="900px">
+</canvas>
+<div class="screen screen-start show">
+    <div class="panel">
+        <h1>Следопыт</h1>
+        <ul>
+            <li>Введите ваше имя и нажмите кнопку Старт</li>
+            <li>Идите дальше, преодолевая препятствия</li>
+            <li>Уничтожайте монстров на своем пути</li>
+            <li>Используйте способности для борьбы с монстрами</li>
+            <li>Каждое умение уменьшают MP, но MP восстанавливается на 5 в секунду</li>
+        </ul>
+        <form>
+            <input id="name" type="text" placeholder="Введи свое имя, Герой!">
+            <input id="start" type="button" value="Старт!">
+        </form>
+    </div>
+</div>
+<div class="screen screen-game">
+    <div class="game-panel game-panel-user">
+        <div class="user-info"><p id="gameName">Username</p></div>
+        <div class="panel-xp">
+            <div class="score-value">
+                <span id="HP">100</span>
+            </div>
+        </div>
+        <div class="panel-mp">
+            <div class="score-value">
+                <span>100</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="game-panel game-panel-scores">
+        <div class="timer">Time: 00:00</div>
+        <div class="kills">Killed: 0</div>
+    </div>
+
+    <div class="game-panel game-panel-skills">
+        <img src="assets/img/skill-sword.png" alt="sword">
+        <img src="assets/img/skill-shield.png" alt="shield">
+        <img src="assets/img/skill-sword-3.png" alt="sword 3">
+        <img src="assets/img/skill-sword-8.png" alt="sword 8">
+    </div>
+</div>
+<div class="screen screen-ranking">
+    <div class="panel">
+        <h1>Rating of Heroes!</h1>
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Username</th>
+                <th>Killed mosters</th>
+                <th>Time</th>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Konstantin</td>
+                <td>100</td>
+                <td>02:12</td>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Konstantin</td>
+                <td>100</td>
+                <td>02:12</td>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Konstantin</td>
+                <td>100</td>
+                <td>02:12</td>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Konstantin</td>
+                <td>100</td>
+                <td>02:12</td>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Konstantin</td>
+                <td>100</td>
+                <td>02:12</td>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Konstantin</td>
+                <td>100</td>
+                <td>02:12</td>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Konstantin</td>
+                <td>100</td>
+                <td>02:12</td>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Konstantin</td>
+                <td>100</td>
+                <td>02:12</td>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Konstantin</td>
+                <td>100</td>
+                <td>02:12</td>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Konstantin</td>
+                <td>100</td>
+                <td>02:12</td>
+            </tr>
+        </table>
+        <button>Start again!</button>
+    </div>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
