@@ -1,5 +1,4 @@
 $('#start').click(startGame);
-
 function startGame() {
     /**
      * при старте игры получаем имя героя, скрываем стартовую панель и запускаем канвас
@@ -427,7 +426,7 @@ function startGame() {
     addEventListener('keyup', handlerUp);
 
     /**
-     * функция дял обработки нажатий клавиш клавиатуры
+     * функция для обработки нажатий клавиш клавиатуры
      */
     function handler(event) {
         if (event.keyCode == 37) {
@@ -463,6 +462,17 @@ function startGame() {
             }
         }
         // тут можно добавить еще для других клавиш. коды можно глянуть тут -> http://www.javascriptkeycode.com/
+    }
+
+    /**
+     *функция для выполнения передвижения игрока
+     */
+    function movePlayer(direction) {
+        if (direction == 'left') {
+            playerCurrentDirection = 'left';
+        } else if (direction == 'right') {
+            playerCurrentDirection = 'right';
+        }
     }
 
     /**
@@ -508,16 +518,6 @@ function startGame() {
         }
     }
 
-    /**
-     *функция для выполнения передвижения игрока
-     */
-    function movePlayer(direction) {
-        if (direction == 'left') {
-            playerCurrentDirection = 'left';
-        } else if (direction == 'right') {
-            playerCurrentDirection = 'right';
-        }
-    }
 }
 
 
