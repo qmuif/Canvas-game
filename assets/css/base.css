@@ -9,9 +9,18 @@
     src: url(../fonts/SortsMillGoudy-Regular.ttf);
 }
 body {
+    height: 100vh;
     font-family: SortsMillGoudy;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: auto;
 }
-
+.center{
+    display: flex;
+    justify-content: center;
+    margin: auto;
+}
 body div{
     z-index: 1;
 }
@@ -41,14 +50,16 @@ ol li {
     width: 50vw;
 }
 .screen-game {
-    width: 100vw;
-    height: 100vh;
+    margin: auto;
+    width: 1530px;
+    height: 700px;
     background: url(../img/bg-game.png);
     background-size: cover;
 }
 .panel {
-    width: 100%;
+    width: 50%;
     padding: 8vh 5vw;
+    margin: 0px 0px 0px 400px;
     height: 100%;
     background: #fff;
     box-shadow: 0 0 10px rgba(0,0,0,.1);
