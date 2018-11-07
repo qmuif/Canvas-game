@@ -1,4 +1,5 @@
 $('#start').click(startGame);
+
 function startGame() {
     /**
      * при старте игры получаем имя героя, скрываем стартовую панель и запускаем канвас
@@ -32,13 +33,16 @@ function startGame() {
     var regenState = 0; // состояние момента регенерации здоровья
     var mpRegenState = 0; //состояние момента регенерации маны
     var bgPosition = 9558; //размер фона
-    var bgMoveSpeed = 5; //скоро прокрутки фона (при пересечении половины видмой части canvas)
+    var bgMoveSpeed = 5; //скорость прокрутки фона (при пересечении половины видмой части canvas)
     var width = canvas.width; //ширина canvas
     var stateStand = 0; // состояние момента анимации простоя
     var stateRun = 0; // состояние момента анимации бега
     var stateAttack = 0; // состояние момента анимации атаки
     var stateBlock = 0; // состояние момента анимации блока
     var stateDie = 0; // состояние момента анимации смерти персонажа
+    var swords;
+    var drawSword = false;
+    var updateSword = false;
     /**
      * background - лес
      * @type {Array}
@@ -116,7 +120,8 @@ function startGame() {
     var playerCurrentDirection = null; //это направление дял функции updatePlayer (она будет ниже в коде)
 
     /**
-     * тут мы запускаем игру: запускаем функцию "создания" нового кадра с интервалом
+     * тут мы запускаем игру:
+     * запускаем функцию "создания" нового кадра с интервалом
      */
     var gameProcess = setInterval(game, 1000 / 60);
     var timerProcess = setTimeout(timer, 1000);
@@ -185,6 +190,10 @@ function startGame() {
         updatePlayer();
         //позиции объектов
         updateDog();
+        //полет мечей
+        if(updateSword){
+            updateThreeSpell();
+        }
     }
 
     //обновление фона
@@ -269,6 +278,20 @@ function startGame() {
         }
     }
 
+    //обновление состояние мечей
+    function updateThreeSpell() {
+        swords.x += swords.speed;
+        for(var i = 0;  i < dog.length; i++){
+            if(dog[i].x - swords.x < 100){
+                dog[i].hp -= 40;
+            }
+        }
+        if (swords.x > width) {
+            updateSword = false; //удаляем объект  когда тот зашел за пределы карты
+            drawSword = false; //удаляем объект  когда тот зашел за пределы карты
+        }
+    }
+
     /**
      * функция для рисования всего на игровом поле
      */
@@ -276,11 +299,14 @@ function startGame() {
         drawBackground(); // фон
         drawPlayer();// игрок
         drawDog();    // круги
+        if(drawSword){
+            drawThreeSpell() //мечи
+        }
     }
 
     //рисование фона
     function drawBackground() {
-        if (bgPosition == 0) bgPosition = 9558;
+        if (bgPosition < -1000) alert("Победа!");
         ctx.drawImage(backgroundImg, bgPosition - 9558, -300);
         ctx.drawImage(backgroundImg, bgPosition, -300);
     }
@@ -419,6 +445,11 @@ function startGame() {
         }
     }
 
+    //рисование мечей
+    function drawThreeSpell() {
+        ctx.drawImage(playerSword, swords.x, swords.y, swords.width, swords.height);
+    }
+
     /**
      * Добвляем в игру отслеживания нажатия клавиш
      */
@@ -460,6 +491,16 @@ function startGame() {
             for (var i = 0; i < dog.length; i++) {
                 dog[i].speed = 40;
             }
+        }
+        if (event.keyCode == 51) {
+            swords = {
+                x: player.x +100,
+                y: player.y + 150,
+                speed: 10,
+                width: 300,
+                height: 150
+            };
+            spell('Three');
         }
         // тут можно добавить еще для других клавиш. коды можно глянуть тут -> http://www.javascriptkeycode.com/
     }
@@ -516,8 +557,12 @@ function startGame() {
                 }
             }
         }
+        if (type == 'Three') {
+           drawSword = true;
+           updateSword = true;
+           player.mp -= 10;
+        }
     }
-
 }
 
 
