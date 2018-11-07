@@ -161,8 +161,8 @@ function startGame() {
      */
     function generateAll() {
         if (dog.length < 10) {
-            //лучше было бы вынести все это в отдельную функцию, но так как я тут создаю только круги, то пока оставлю это так (как делать правильно смотри в updateAll() )
-            if (Math.floor(Math.random() * 400) <= 1) { //с шансом в 2% в текущем кадре будет создан новый круг (2*60 = 120% в секунду, т е в секунду будет создан минимум 1 круг)
+            //лучше было бы вынести все это в отдельную функцию, но так как я тут создаю только собаки, то пока оставлю это так (как делать правильно смотри в updateAll() )
+            if (Math.floor(Math.random() * 400) <= 1) { //с шансом в 0.4% в текущем кадре будет создан новый круг (0.4*60 = 24% в секунду)
                 //добавляем новый круг
                 dog.push({
                     dmgState: 0,
@@ -170,7 +170,7 @@ function startGame() {
                     hp: 15,
                     x: Math.floor(Math.random() * (canvas.width - canvas.width / 2 + 1)) + canvas.width / 2 + 150,
                     y: canvas.height, //они будут двигаться справа налево
-                    speed: 50 + Math.floor(Math.random() * 9), //с рандомной скоростью 20-29
+                    speed: 40,
                     state: 0
                 });
             }
@@ -276,7 +276,7 @@ function startGame() {
      */
     function drawAll() {
         drawBackground(); // фон
-        drawPlayer(playerImg);// игрок
+        drawPlayer();// игрок
         drawDog();    // круги
     }
 
