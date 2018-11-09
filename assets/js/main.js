@@ -4,8 +4,9 @@ function startGame() {
     /**
      * при старте игры получаем имя героя, скрываем стартовую панель и запускаем канвас
      * */
-    //получаем имя
-    $('#gameName').text($('#name').val());
+        //получаем имя
+    var Name = $('#name').val();
+    $('#gameName').text(Name);
     //скрываем панель
     $('.panel').hide(300);
     $('.screen-game').css("background", "none");
@@ -32,7 +33,7 @@ function startGame() {
     var mpBlockState = 0; // состояние момента потребления маны второй способностью
     var regenState = 0; // состояние момента регенерации здоровья
     var mpRegenState = 0; //состояние момента регенерации маны
-    var bgPosition = 9558; //размер фона
+    var bgPosition = -1; //размер фона
     var bgMoveSpeed = 5; //скорость прокрутки фона (при пересечении половины видмой части canvas)
     var width = canvas.width; //ширина canvas
     var stateStand = 0; // состояние момента анимации простоя
@@ -40,9 +41,17 @@ function startGame() {
     var stateAttack = 0; // состояние момента анимации атаки
     var stateBlock = 0; // состояние момента анимации блока
     var stateDie = 0; // состояние момента анимации смерти персонажа
-    var swords;
-    var drawSword = false;
-    var updateSword = false;
+    var swords; //мечи
+    var drawSword = false; //режим отрисовки мечей
+    var updateSword = false;//режим обновления мечей
+    var cooldownThreeSpell; //состояние перезарядки третьей способности
+    var cooldownThreeTime; //перезарядка третьей способности
+    var aoe; //четвертая способность
+    var stateAoe = 0; //состояние отрисовки
+    var drawAoe = false; //режим отрисовки четветрой способности
+    var cooldownFourSpell; //состояние перезарядки четвертой способности
+    var cooldownFourTime; //перезарядка четвертой способности
+    var gamePaused = false;
     /**
      * background - лес
      * @type {Array}
@@ -92,6 +101,14 @@ function startGame() {
     playerSword.onload = function () {
     };
     playerSword.src = '../assets/img/sword.png';
+    //четвертая способность
+    var playerAoe = [];
+    for (var i = 0; i <= 26; i++) {
+        playerAoe[i] = new Image();
+        playerAoe[i].onload = function () {
+        };
+        playerAoe[i].src = '../assets/img/swordRain/' + i + '.png';
+    }
     //смерть персонажа
     var playerDie = [];
     for (var i = 0; i <= 49; i++) {
@@ -102,7 +119,7 @@ function startGame() {
     }
 
     /**
-     * Противник собака
+     * противник собака
      */
     var dogImg = [];
     for (var i = 0; i <= 7; i++) {
@@ -113,10 +130,63 @@ function startGame() {
     }
 
     /**
-     * Обьекты - собаки
+     * противник эльф
+     */
+    var elfRunImg = [];
+    for (var i = 0; i <= 19; i++) {
+        elfRunImg[i] = new Image();
+        elfRunImg[i].onload = function () {
+        };
+        elfRunImg[i].src = '../assets/img/elf/Run/Run_0' + i + '.png';
+    }
+    //атака эльфа
+    var elfAttack = [];
+    for (var i = 0; i <= 19; i++) {
+        elfAttack[i] = new Image();
+        elfAttack[i].onload = function () {
+        };
+        elfAttack[i].src = '../assets/img/elf/Attack2/Attack2_0' + i + '.png';
+    }
+    //смерть эльфа
+    var elfDie = [];
+    for (var i = 0; i <= 19; i++) {
+        elfDie[i] = new Image();
+        elfDie[i].onload = function () {
+        };
+        elfDie[i].src = '../assets/img/elf/DIe/Die_0' + i + '.png';
+    }
+    /**
+     * противник гринч (сильный эльф)
+     */
+    var greenchRunImg = [];
+    for (var i = 0; i <= 19; i++) {
+        greenchRunImg[i] = new Image();
+        greenchRunImg[i].onload = function () {
+        };
+        greenchRunImg[i].src = '../assets/img/greench/Run/Run_0' + i + '.png';
+    }
+    //атака сильного эльфа
+    var greenchAttack = [];
+    for (var i = 0; i <= 19; i++) {
+        greenchAttack[i] = new Image();
+        greenchAttack[i].onload = function () {
+        };
+        greenchAttack[i].src = '../assets/img/greench/Attack2/Attack2_0' + i + '.png';
+    }
+    //смерть сильного эльфа
+    var greenchDie = [];
+    for (var i = 0; i <= 19; i++) {
+        greenchDie[i] = new Image();
+        greenchDie[i].onload = function () {
+        };
+        greenchDie[i].src = '../assets/img/greench/DIe/Die_0' + i + '.png';
+    }
+
+    /**
+     * Обьекты - враги
      * @type {Array}
      */
-    var dog = [];
+    var opponents = [];
     var playerCurrentDirection = null; //это направление дял функции updatePlayer (она будет ниже в коде)
 
     /**
@@ -128,7 +198,50 @@ function startGame() {
     var time = 0;
 
     /**
+     * игровая пауза
+     */
+    function gamePause() {
+        if (!gamePaused) {
+            clearInterval(gameProcess);
+            clearInterval(timerProcess);
+            gamePaused = true;
+        }
+        else {
+            gameProcess = setInterval(game, 1000 / 60);
+            timerProcess = setTimeout(timer, 1000);
+            gamePaused = false;
+        }
+    }
+
+    function gameEnd() {
+        $('.panel').show(300);
+        $('#type').text("Победа!");
+        $('#startInfo').css("display", "none");
+        $('#name').hide(300);
+        $('#name').value = Name;
+        $('#start').val("Еще раз!");
+        minutes = Math.floor(time / 60);
+        seconds = time % 60;
+        /**
+         * Вот тут должен быть ajax апрос
+         */
+        $.ajax({
+            type: "POST",
+            url: "../../register.php",
+            data: {
+                username : Name,
+                score: player.score,
+                time : minutes+":"+seconds
+            },
+            success: function(msg){
+                alert( "Прибыли данные: " + msg );
+            }
+        });
+    }
+
+    /**
      * Таймер для левой нижней панели
+     * а так же перезарядки способностей
      */
     function timer() {
         //таймер
@@ -145,6 +258,12 @@ function startGame() {
         else
             secondsText = seconds;
         $('.timer').text(minutesText + ":" + secondsText);
+        if ((cooldownThreeTime + 3) == time) {
+            cooldownThreeSpell = false;
+        }
+        if ((cooldownFourTime + 15) == time) {
+            cooldownFourSpell = false;
+        }
         timerProcess = setTimeout(timer, 1000);
     }
 
@@ -161,21 +280,63 @@ function startGame() {
     }
 
     /**
-     *  создаем объекты, (dog)
+     *  создаем объекты, (opponents)
      */
     function generateAll() {
-        if (dog.length < 10) {
-            if (Math.floor(Math.random() * 400) <= 1) { //с шансом в 0.4% в текущем кадре будет создан новая собака (0.4*60 = 24% в секунду)
-                //добавляем новый круг
-                dog.push({
-                    dmgState: 0,
-                    dmg: 2,
-                    hp: 15,
-                    x: Math.floor(Math.random() * (canvas.width - canvas.width / 2 + 1)) + canvas.width / 2 + 150,
-                    y: canvas.height,
-                    speed: 40,
-                    state: 0
-                });
+        if (opponents.length < 10) {
+            if (Math.floor(Math.random() * 100) <= 1) { //с шансом в 0.4% в текущем кадре будет создан новый враг (0.4*60 = 24% в секунду)
+                //добавляем нового врага
+                var rand = Math.floor(Math.random() * 100);
+                if (rand < 33) {
+                    var type = 'dog';
+                }
+                else if (rand > 66) {
+                    var type = 'elf';
+                } else {
+                    var type = 'greench';
+                }
+                if (type == 'dog') {
+                    opponents.push({
+                        type: 'dog',
+                        dmgState: 0,
+                        dmg: 2,
+                        hp: 15,
+                        x: Math.floor(Math.random() * (canvas.width - canvas.width / 2 + 1)) + canvas.width / 2 + 150,
+                        y: canvas.height,
+                        speed: 40,
+                        state: 0
+                    });
+                }
+                if (type == 'elf') {
+                    opponents.push({
+                        type: 'elf',
+                        animation: 'run',
+                        dieState: 0,
+                        attState: 0,
+                        dmgState: 0,
+                        dmg: 5,
+                        hp: 30,
+                        x: Math.floor(Math.random() * (canvas.width - canvas.width / 2 + 1)) + canvas.width / 2 + 150,
+                        y: canvas.height,
+                        speed: 40,
+                        state: 0
+                    });
+                }
+                if (type == 'greench') {
+                    opponents.push({
+                        type: 'greench',
+                        animation: 'run',
+                        dieState: 0,
+                        attState: 0,
+                        dmgState: 0,
+                        dmg: 10,
+                        hp: 60,
+                        x: Math.floor(Math.random() * (canvas.width - canvas.width / 2 + 1)) + canvas.width / 2 + 150,
+                        y: canvas.height,
+                        speed: 40,
+                        state: 0
+                    });
+                }
             }
         }
     }
@@ -189,18 +350,18 @@ function startGame() {
         //позиция игрока
         updatePlayer();
         //позиции объектов
-        updateDog();
+        updateOpponents();
         //полет мечей
-        if(updateSword){
+        if (updateSword) {
             updateThreeSpell();
         }
     }
 
     //обновление фона
     function updateBackground() {
-        if (player.x > (width / 2) - 100 && animationTupe == 'rightRun') {
-            for (var i = 0; i < dog.length; i++) {
-                dog[i].x -= 2;
+        if (player.x > (width / 2) - 100 && animationTupe == 'rightRun' && (bgPosition > 0)) {
+            for (var i = 0; i < opponents.length; i++) {
+                opponents[i].x -= 2;
             }
             bgPosition -= bgMoveSpeed;
             player.speed = 0;
@@ -228,18 +389,28 @@ function startGame() {
             //после того как мы сдвинули игрока, надо обнулить переменную (это получается как костыль)
             playerCurrentDirection = null;
         }
-        for (var i = 0; i < dog.length; i++) {
-            if (Math.abs(dog[i].x - player.x) < 200) {
-                if (Math.floor(dog[i].dmgState) == 60) {
-                    player.hp -= 2;
-                    dog[i].dmgState = 0;
+        for (var i = 0; i < opponents.length; i++) {
+            if (Math.abs(opponents[i].x - player.x) < 200) {
+                if (opponents[i].type == 'dog') {
+                    if (Math.floor(opponents[i].dmgState) == 60) {
+                        player.hp -= 2;
+                        opponents[i].dmgState = 0;
+                    }
+                    opponents[i].dmgState += 1;
                 }
-                dog[i].dmgState += 1;
+                if (opponents[i].type == 'elf' || opponents[i].type == 'greench') {
+                    opponents[i].animation = 'attack';
+                    if (Math.floor(opponents[i].dmgState) == 60) {
+                        player.hp -= opponents[i].dmg;
+                        opponents[i].dmgState = 0;
+                    }
+                    opponents[i].dmgState += 1;
+                }
             }
         }
         if (player.hp < 100) {
             if (Math.floor(regenState) == 60) {
-                player.hp += 2;
+                player.hp += 200;
                 regenState = 0;
             }
             regenState += 1;
@@ -258,37 +429,54 @@ function startGame() {
         $('#MP').text(player.mp);
     }
 
-    //обновление состояния собак
-    function updateDog() {
-        for (var i = 0; i < dog.length; i++) {
-            if (dog[i].x < player.x) {
-                dog[i].x += dog[i].speed / 60;
+    //обновление состояния противников
+    function updateOpponents() {
+        for (var i = 0; i < opponents.length; i++) {
+            if (opponents[i].x < player.x) {
+                opponents[i].x += opponents[i].speed / 60;
             }
             else {
-                dog[i].x -= dog[i].speed / 60;
+                opponents[i].x -= opponents[i].speed / 60;
             }
-            if (dog[i].x < 0) {
-                dog.splice(i, 1); //удаляем объект из массива когда тот зашел за пределы карты
+            if (opponents[i].x < 0) {
+                opponents.splice(i, 1); //удаляем объект из массива когда тот зашел за пределы карты
             }
-            if (dog[i].hp <= 0) {
-                player.score++;
-                $('.kills').text("Killed: " + player.score);
-                dog.splice(i, 1);
+            if (opponents[i].hp <= 0) {
+                if (opponents[i].type == 'elf' || opponents[i].type == 'greench') {
+                    opponents[i].dmg = 0;
+                    opponents[i].speed = 0;
+                    opponents[i].animation = 'die';
+                }
+                if (opponents[i].type == 'dog') {
+                    opponents.splice(i, 1);
+                    player.score++;
+                }
             }
+            $('.kills').text("Killed: " + player.score);
         }
     }
 
     //обновление состояние мечей
     function updateThreeSpell() {
-        swords.x += swords.speed;
-        for(var i = 0;  i < dog.length; i++){
-            if(dog[i].x - swords.x < 100){
-                dog[i].hp -= 40;
+        if (swords.direction == 'right') {
+            swords.x += swords.speed;
+            if (swords.x > width) {
+                updateSword = false; //удаляем объект  когда тот зашел за пределы карты
+                drawSword = false; //удаляем объект  когда тот зашел за пределы карты
+                for (var i = 0; i < opponents.length; i++) {
+                    opponents[i].hp -= 40;
+                }
             }
         }
-        if (swords.x > width) {
-            updateSword = false; //удаляем объект  когда тот зашел за пределы карты
-            drawSword = false; //удаляем объект  когда тот зашел за пределы карты
+        else if (swords.direction == 'left') {
+            swords.x -= swords.speed;
+            if (swords.x < 0) {
+                updateSword = false; //удаляем объект  когда тот зашел за пределы карты
+                drawSword = false; //удаляем объект  когда тот зашел за пределы карты
+                for (var i = 0; i < opponents.length; i++) {
+                    opponents[i].hp -= 40;
+                }
+            }
         }
     }
 
@@ -298,15 +486,21 @@ function startGame() {
     function drawAll() {
         drawBackground(); // фон
         drawPlayer();// игрок
-        drawDog();    // круги
-        if(drawSword){
+        drawOpponents();    // круги
+        if (drawSword) {
             drawThreeSpell() //мечи
+        }
+        if (drawAoe) {
+            drawFourSpell() //четвертая способность
         }
     }
 
     //рисование фона
     function drawBackground() {
-        if (bgPosition < -1000) alert("Победа!");
+        if (bgPosition < 0 && player.x >= 1200) {
+            gamePause();
+            gameEnd();
+        }
         ctx.drawImage(backgroundImg, bgPosition - 9558, -300);
         ctx.drawImage(backgroundImg, bgPosition, -300);
     }
@@ -422,32 +616,180 @@ function startGame() {
         }
     }
 
-    //рисование собак
-    function drawDog() {
-        for (var i = 0; i < dog.length; i++) {
-            if (player.x + 50 < dog[i].x) {
-                ctx.save();
-                ctx.scale(-1, 1);
-                ctx.drawImage(dogImg[Math.floor(dog[i].state)], -dog[i].x, 545, 200, 170);
-                ctx.restore();
-                dog[i].state += 0.334;
-                if (Math.floor(dog[i].state) == 7) {
-                    dog[i].state = 0;
+    //рисование противников
+    function drawOpponents() {
+        for (var i = 0; i < opponents.length; i++) {
+            if (opponents[i].type == 'dog') {
+                if (player.x + 50 < opponents[i].x) {
+                    ctx.save();
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(dogImg[Math.floor(opponents[i].state)], -opponents[i].x, 545, 170, 170);
+                    ctx.restore();
+                    opponents[i].state += 0.334;
+                    if (Math.floor(opponents[i].state) == 7) {
+                        opponents[i].state = 0;
+                    }
                 }
-            }
-            else {
-                ctx.drawImage(dogImg[Math.floor(dog[i].state)], dog[i].x, 545, 200, 170);
-                dog[i].state += 0.334;
-                if (Math.floor(dog[i].state) == 7) {
-                    dog[i].state = 0;
+                else {
+                    ctx.drawImage(dogImg[Math.floor(opponents[i].state)], opponents[i].x, 545, 170, 170);
+                    opponents[i].state += 0.334;
+                    if (Math.floor(opponents[i].state) == 7) {
+                        opponents[i].state = 0;
+                    }
+                }
+            }else if (opponents[i].type == 'elf') {
+                if (opponents[i].animation == 'run') {
+                    if (player.x + 50 < opponents[i].x) {
+                        ctx.save();
+                        ctx.scale(-1, 1);
+                        ctx.drawImage(elfRunImg[Math.floor(opponents[i].state)], -opponents[i].x, 320, 200, 400);
+                        ctx.restore();
+                        opponents[i].state += 0.334;
+                        if (Math.floor(opponents[i].state) == 18) {
+                            opponents[i].state = 0;
+                        }
+                    }
+                    else {
+                        ctx.drawImage(elfRunImg[Math.floor(opponents[i].state)], opponents[i].x, 320, 200, 400);
+                        opponents[i].state += 0.334;
+                        if (Math.floor(opponents[i].state) == 18) {
+                            opponents[i].state = 0;
+                        }
+                    }
+                }
+                if (opponents[i].animation == 'attack') {
+                    if (player.x + 50 < opponents[i].x) {
+                        ctx.save();
+                        ctx.scale(-1, 1);
+                        ctx.drawImage(elfAttack[Math.floor(opponents[i].attState)], -opponents[i].x, 320, 200, 400);
+                        ctx.restore();
+                        opponents[i].attState += 0.334;
+                        if (Math.floor(opponents[i].attState) == 17) {
+                            opponents[i].attState = 0;
+                            opponents[i].animation = 'run';
+                        }
+                    }
+                    else {
+                        ctx.drawImage(elfAttack[Math.floor(opponents[i].attState)], opponents[i].x, 320, 200, 400);
+                        opponents[i].attState += 0.334;
+                        if (Math.floor(opponents[i].attState) == 17) {
+                            opponents[i].attState = 0;
+                            opponents[i].animation = 'run';
+                        }
+                    }
+                }
+                if (opponents[i].animation == 'die') {
+                    if (player.x + 50 < opponents[i].x) {
+                        ctx.save();
+                        ctx.scale(-1, 1);
+                        ctx.drawImage(elfDie[Math.floor(opponents[i].dieState)], -opponents[i].x - 250, 330, 400, 400);
+                        ctx.restore();
+                        opponents[i].dieState += 0.334;
+                        if (Math.floor(opponents[i].dieState) == 18) {
+                            opponents[i].dieState = 0;
+                            player.score++;
+                            opponents.splice(i, 1);
+                        }
+                    }
+                    else {
+                        ctx.drawImage(elfDie[Math.floor(opponents[i].dieState)], opponents[i].x - 250, 320, 400, 400);
+                        opponents[i].dieState += 0.334;
+                        if (Math.floor(opponents[i].dieState) == 18) {
+                            opponents[i].dieState = 0;
+                            player.score++;
+                            opponents.splice(i, 1);
+                        }
+                    }
+                }
+            }else if (opponents[i].type == 'greench') {
+                if (opponents[i].animation == 'run') {
+                    if (player.x + 50 < opponents[i].x) {
+                        ctx.save();
+                        ctx.scale(-1, 1);
+                        ctx.drawImage(greenchRunImg[Math.floor(opponents[i].state)], -opponents[i].x, 320, 200, 400);
+                        ctx.restore();
+                        opponents[i].state += 0.334;
+                        if (Math.floor(opponents[i].state) == 18) {
+                            opponents[i].state = 0;
+                        }
+                    }
+                    else {
+                        ctx.drawImage(greenchRunImg[Math.floor(opponents[i].state)], opponents[i].x, 320, 200, 400);
+                        opponents[i].state += 0.334;
+                        if (Math.floor(opponents[i].state) == 18) {
+                            opponents[i].state = 0;
+                        }
+                    }
+                }
+                if (opponents[i].animation == 'attack') {
+                    if (player.x + 50 < opponents[i].x) {
+                        ctx.save();
+                        ctx.scale(-1, 1);
+                        ctx.drawImage(greenchAttack[Math.floor(opponents[i].attState)], -opponents[i].x, 320, 200, 400);
+                        ctx.restore();
+                        opponents[i].attState += 0.334;
+                        if (Math.floor(opponents[i].attState) == 17) {
+                            opponents[i].attState = 0;
+                            opponents[i].animation = 'run';
+                        }
+                    }
+                    else {
+                        ctx.drawImage(greenchAttack[Math.floor(opponents[i].attState)], opponents[i].x, 320, 200, 400);
+                        opponents[i].attState += 0.334;
+                        if (Math.floor(opponents[i].attState) == 17) {
+                            opponents[i].attState = 0;
+                            opponents[i].animation = 'run';
+                        }
+                    }
+                }
+                if (opponents[i].animation == 'die') {
+                    if (player.x + 50 < opponents[i].x) {
+                        ctx.save();
+                        ctx.scale(-1, 1);
+                        ctx.drawImage(greenchDie[Math.floor(opponents[i].dieState)], -opponents[i].x - 250, 330, 400, 400);
+                        ctx.restore();
+                        opponents[i].dieState += 0.6;
+                        if (Math.floor(opponents[i].dieState) == 18) {
+                            opponents[i].dieState = 0;
+                            player.score++;
+                            opponents.splice(i, 1);
+                        }
+                    }
+                    else {
+                        ctx.drawImage(greenchDie[Math.floor(opponents[i].dieState)], opponents[i].x - 250, 320, 400, 400);
+                        opponents[i].dieState += 0.6;
+                        if (Math.floor(opponents[i].dieState) == 18) {
+                            opponents[i].dieState = 0;
+                            player.score++;
+                            opponents.splice(i, 1);
+                        }
+                    }
                 }
             }
         }
     }
 
-    //рисование мечей
+    //рисование третьей способности
     function drawThreeSpell() {
-        ctx.drawImage(playerSword, swords.x, swords.y, swords.width, swords.height);
+        if (swords.direction == 'right') {
+            ctx.drawImage(playerSword, swords.x, swords.y, swords.width, swords.height);
+        }
+        else {
+            ctx.save();
+            ctx.scale(-1, 1);
+            ctx.drawImage(playerSword, -swords.x - 100, swords.y, swords.width, swords.height);
+            ctx.restore();
+        }
+    }
+
+    //рисование четветрой способности
+    function drawFourSpell() {
+        ctx.drawImage(playerAoe[Math.floor(stateAoe)], aoe.x, aoe.y, aoe.width, aoe.height);
+        stateAoe += 0.334;
+        if (Math.floor(stateAoe) > 25) {
+            stateAoe = 0;
+            drawAoe = false;
+        }
     }
 
     /**
@@ -469,7 +811,11 @@ function startGame() {
         } else if (event.keyCode == 49) {
             animationTupe = "attack";
         } else if (event.keyCode == 50) {
-            animationTupe = "block";
+            if (player.mp > 5) {
+                animationTupe = "block";
+            }
+        } else if (event.keyCode == 27) {
+            gamePause();
         }// тут можно добавить еще для других клавиш. коды можно глянуть тут -> http://www.javascriptkeycode.com/
     }
 
@@ -488,19 +834,52 @@ function startGame() {
         }
         if (event.keyCode == 50) {
             stateBlock = 14;
-            for (var i = 0; i < dog.length; i++) {
-                dog[i].speed = 40;
+            for (var i = 0; i < opponents.length; i++) {
+                opponents[i].speed = 40;
             }
         }
         if (event.keyCode == 51) {
-            swords = {
-                x: player.x +100,
-                y: player.y + 150,
-                speed: 10,
-                width: 300,
-                height: 150
-            };
-            spell('Three');
+            if (player.mp > 10) {
+                if (!cooldownThreeSpell) {
+                    cooldownThreeSpell = true;
+                    cooldownThreeTime = time;
+                    swords = {
+                        x: player.x + 100,
+                        y: player.y + 150,
+                        speed: 20,
+                        width: 300,
+                        height: 150,
+                        direction: 0,
+                    };
+                    if (direction == 'left') {
+                        swords.direction = 'left';
+                    }
+                    else {
+                        swords.direction = 'right'
+                    }
+                    spell('Three');
+                }
+            }
+        }
+        if (event.keyCode == 52) {
+            if (player.mp > 30) {
+                if (!cooldownFourSpell) {
+                    cooldownFourSpell = true;
+                    cooldownFourTime = time;
+                    aoe = {
+                        x: player.x + 100,
+                        y: player.y + 50,
+                        width: 600,
+                        height: 350,
+                        direction: 'right'
+                    };
+                    if (direction == 'left') {
+                        aoe.x = player.x - 600;
+                        aoe.direction = 'left'
+                    }
+                    spell('Four');
+                }
+            }
         }
         // тут можно добавить еще для других клавиш. коды можно глянуть тут -> http://www.javascriptkeycode.com/
     }
@@ -522,45 +901,66 @@ function startGame() {
     function spell(type) {
         if (type == 'One') {
             if (direction == 'right') {
-                for (var i = 0; i < dog.length; i++) {
-                    if (dog[i].x < player.x + 450 && dog[i].x > player.x) {
-                        dog[i].hp -= 15;
+                for (var i = 0; i < opponents.length; i++) {
+                    if (opponents[i].x < player.x + 450 && opponents[i].x > player.x) {
+                        opponents[i].hp -= 15;
                     }
                 }
             }
             else {
-                for (var i = 0; i < dog.length; i++) {
-                    if (dog[i].x > player.x - 450 && dog[i].x < player.x) {
-                        dog[i].hp -= 15;
+                for (var i = 0; i < opponents.length; i++) {
+                    if (opponents[i].x > player.x - 450 && opponents[i].x < player.x) {
+                        opponents[i].hp -= 15;
                     }
                 }
             }
         }
         if (type == 'Two') {
-            if (Math.floor(mpBlockState) == 60) {
-                player.mp -= 5;
-                mpBlockState = 0;
-            }
-            mpBlockState += 1;
-            if (direction == 'right') {
-                for (var i = 0; i < dog.length; i++) {
-                    if (dog[i].x - player.x < 400) {
-                        dog[i].speed = 0;
+            if (player.mp > 5) {
+                if (Math.floor(mpBlockState) == 60) {
+                    player.mp -= 5;
+                    mpBlockState = 0;
+                }
+                mpBlockState += 1;
+                if (direction == 'right') {
+                    for (var i = 0; i < opponents.length; i++) {
+                        if (opponents[i].x - player.x < 400) {
+                            opponents[i].speed = 0;
+                        }
+                    }
+                }
+                else {
+                    for (var i = 0; i < opponents.length; i++) {
+                        if (Math.abs(opponents[i].x - player.x) < 400) {
+                            opponents[i].speed = 0;
+                        }
                     }
                 }
             }
             else {
-                for (var i = 0; i < dog.length; i++) {
-                    if (Math.abs(dog[i].x - player.x) < 400) {
-                        dog[i].speed = 0;
-                    }
-                }
+                animationTupe = 'idle';
             }
         }
         if (type == 'Three') {
-           drawSword = true;
-           updateSword = true;
-           player.mp -= 10;
+            drawSword = true;
+            updateSword = true;
+            player.mp -= 10;
+        }
+        if (type == 'Four') {
+            drawAoe = true;
+            player.mp -= 30;
+            for (var i = 0; i < opponents.length; i++) {
+                if (aoe.direction == 'right') {
+                    if (opponents[i].x < player.x + 650 && opponents[i].x > player.x) {
+                        opponents[i].hp -= 100;
+                    }
+                }
+                else {
+                    if (opponents[i].x > player.x - 650 && opponents[i].x < player.x) {
+                        opponents[i].hp -= 100;
+                    }
+                }
+            }
         }
     }
 }
