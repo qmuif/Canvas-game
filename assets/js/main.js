@@ -284,7 +284,7 @@ function startGame() {
      */
     function generateAll() {
         if (opponents.length < 10) {
-            if (Math.floor(Math.random() * 100) <= 1) { //с шансом в 0.4% в текущем кадре будет создан новый враг (0.4*60 = 24% в секунду)
+            if (Math.floor(Math.random() * 100) <= 1) { //с шансом в 1% в текущем кадре будет создан новый враг (1*60 = 60% в секунду)
                 //добавляем нового врага
                 var rand = Math.floor(Math.random() * 100);
                 if (rand < 33) {
